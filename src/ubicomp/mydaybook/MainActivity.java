@@ -10,11 +10,14 @@ import ubicomp.mydaybook.linechart.LineChartTitle;
 import ubicomp.mydaybook.linechart.LineChartView;
 import ubicomp.mydaybook.data.Database;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -56,13 +59,20 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 	private LineChartTitle chartTitle;
 	private ChartCaller caller;
 	
-	public View lineChartBar, lineChartView, lineChartFilter, calendarBar, calendarView;
+	public View lineChartBar, lineChartView, lineChartFilter, calendarBar, calendarView, filterView;
 	
-	public ImageView lineChartFilterButton;
+	private ImageView filterAll, filter1, filter2, filter3, filter4, filter5, filter6, filter7, filter8;
+	public ImageView lineChartFilterButton, calendarFilterButton, rotateLineChart;
+	
+	public static boolean[] filterButtonIsPressed = {true, false, false, false, false, false, false, false, false};
 	
 	private boolean isFilterIsOpen = false;
+	private boolean isRotated = false;
 	
 	private int drawerHeight = App.getContext().getResources().getDimensionPixelSize(R.dimen.drawer_normal_height);
+	private int drawerHeightWithFilter = App.getContext().getResources().getDimensionPixelSize(R.dimen.drawer_with_filter_height);
+	private int filterHeight = App.getContext().getResources().getDimensionPixelSize(R.dimen.filter_normal_height);
+	private int filterHeightLandscape = App.getContext().getResources().getDimensionPixelSize(R.dimen.filter_landscape_height);
 	//public static List<Integer> filterList = new ArrayList<Integer>();
 
 	@SuppressWarnings("deprecation")
@@ -97,8 +107,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 		backToTodayText = (TextView) findViewById(R.id.back_to_today);
 		backToTodayText.setText(Integer.toString(selectedDay));
 		
-		titleText = (TextView) findViewById(R.id.month_text);
-		
+		titleText = (TextView) findViewById(R.id.month_text);	
 		drawer = (SlidingDrawer) findViewById(R.id.slidingDrawer1);
 		toggle = (ImageView) findViewById(R.id.toggle);
 		linechartIcon = (ImageView) findViewById(R.id.linechart_icon);
@@ -106,8 +115,31 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 		lineChartBar = (View) inflater.inflate(R.layout.linechart_upperbar, null, false);
 		lineChartView = (View) inflater.inflate(R.layout.linechart_main, null, false);
 		lineChartFilter = (View) inflater.inflate(R.layout.linechart_filter, null, false);
+		
+		rotateLineChart = (ImageView) lineChartBar.findViewById(R.id.rotate_button);
+		
 	    calendarIcon = (ImageView) lineChartBar.findViewById(R.id.back_to_calendar);
 	    toggle_linechart = (ImageView) lineChartBar.findViewById(R.id.toggle_linechart);
+	    
+	    filterAll = (ImageView) lineChartFilter.findViewById(R.id.filter_all);
+	    filter1 = (ImageView) lineChartFilter.findViewById(R.id.filter_1);
+	    filter2 = (ImageView) lineChartFilter.findViewById(R.id.filter_2);
+	    filter3 = (ImageView) lineChartFilter.findViewById(R.id.filter_3);
+	    filter4 = (ImageView) lineChartFilter.findViewById(R.id.filter_4);
+	    filter5 = (ImageView) lineChartFilter.findViewById(R.id.filter_5);
+	    filter6 = (ImageView) lineChartFilter.findViewById(R.id.filter_6);
+	    filter7 = (ImageView) lineChartFilter.findViewById(R.id.filter_7);
+	    filter8 = (ImageView) lineChartFilter.findViewById(R.id.filter_8);
+	    
+	    filterAll.setOnClickListener(new FilterListener());
+	    filter1.setOnClickListener(new FilterListener());
+	    filter2.setOnClickListener(new FilterListener());
+	    filter3.setOnClickListener(new FilterListener());
+	    filter4.setOnClickListener(new FilterListener());
+	    filter5.setOnClickListener(new FilterListener());
+	    filter6.setOnClickListener(new FilterListener());
+	    filter7.setOnClickListener(new FilterListener());
+	    filter8.setOnClickListener(new FilterListener());	    
 
 		showDiary();
 				
@@ -119,8 +151,6 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 		toggle_linechart.setOnClickListener(new ToggleListener());
 		toggle.setOnClickListener(new ToggleListener());
 		titleText.setOnClickListener(new ToggleListener());
-		
-		//for ( int i = 0; i < 9; i++ ) { filterList.add(i);} 
 	
 		linechartIcon.setOnClickListener(new OnClickListener() {
 			
@@ -137,6 +167,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 					drawerContent.removeAllViews();
 					upperBarContent.removeAllViews();
 					drawerContent.addView(lineChartFilter);
+					setFilterSize();
 					drawerContent.addView(lineChartView);
 					upperBarContent.addView(lineChartBar);
 				}
@@ -176,6 +207,8 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 					upperBarContent.removeAllViews();
 					
 					drawerContent.addView(lineChartFilter);
+					setFilterSize();
+					
 					drawerContent.addView(calendarView);
 					upperBarContent.addView(calendarBar);
 					if  (!drawer.isOpened()) { drawer.toggle(); }
@@ -183,8 +216,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 				
 			}
 		});
-				
-		
+						
 		drawer.setOnDrawerOpenListener(new OnDrawerOpenListener() {
 			@Override
 			public void onDrawerOpened() {
@@ -222,44 +254,29 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 			}
 			
 		});
-				
-		lineChartFilterButton = (ImageView) lineChartBar.findViewById(R.id.line_chart_filter);
-		lineChartFilterButton.setOnClickListener(new OnClickListener() {
+		 rotateLineChart.setOnClickListener(new OnClickListener() {
+			
 			@Override
 			public void onClick(View v) {
-//				DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
-//		        float dpHeight = displayMetrics.heightPixels / displayMetrics.density;
-//		        float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
-//				lineChart.setCanvasHeight( (int) (325*dpHeight) );
-				if (isFilterIsOpen == false) {				
-					LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
-					//Log.i("OMG", "H: "+lp.height);
-					lp.height = 1200;
-					lp.addRule(RelativeLayout.BELOW, lineChartBar.getId());
-					drawer.setLayoutParams(lp);
-					
-					drawerContent.removeAllViews();
-					
-					drawerContent.addView(lineChartFilter);
-					drawerContent.addView(lineChartView);
-					isFilterIsOpen = true;
+				// TODO Auto-generated method stub
+				if (isRotated) {
+					setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+					isRotated = false;
 				}
 				else {
-					LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
-					lp.height = drawerHeight;
-					lp.addRule(RelativeLayout.BELOW, lineChartBar.getId());
-					drawer.setLayoutParams(lp);
-					
-					drawerContent.removeAllViews();
-					
-					drawerContent.addView(lineChartView);
-					isFilterIsOpen = false;
+					setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+					isRotated = true;
 				}
 				
 			}
-		});		
+		});
+				
+		lineChartFilterButton = (ImageView) lineChartBar.findViewById(R.id.line_chart_filter);
+		calendarFilterButton = (ImageView) calendarBar.findViewById(R.id.calendar_filter);
+		lineChartFilterButton.setOnClickListener(new FilterButtonListener());
+		calendarFilterButton.setOnClickListener(new FilterButtonListener());
+		
 	}
-	
 
 	private float[] getRandomData() {
         return new float[] { 0, -3, 1, -2, -1, -3, 3, 2, 0, 1, -2, -1, 2, -2, 0, 1, -3, -1, 2, -1, 1, 3};
@@ -286,6 +303,59 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 		super.onResume();
 	}
 	
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+	    super.onConfigurationChanged(newConfig);
+	    
+	    LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
+    	Display display = getWindowManager().getDefaultDisplay();
+    	int width = display.getWidth(); 
+    	int height = display.getHeight();
+
+	    // Checks the orientation of the screen
+	    if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {	    	
+	    	calendarIcon.setVisibility(View.INVISIBLE);
+	      	toggle_linechart.setVisibility(View.INVISIBLE);
+	    	
+	    	chartAreaLayout.setBackgroundResource(R.drawable.linechart_bg_landscape);
+	    	
+	    	lp.width = width;
+	    	lp.height = height - upperBarContent.getHeight() + 200;	    	
+	    } 
+	    else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+	    	calendarIcon.setVisibility(View.VISIBLE);
+	      	toggle_linechart.setVisibility(View.VISIBLE);
+	      	
+	    	chartAreaLayout.setBackgroundResource(R.drawable.linechart_bg);
+	    	
+	    	if (!isFilterIsOpen) {		    	
+		    	lp.width = width;
+		    	lp.height = drawerHeight;
+	    	}
+	    	else {
+	    	  	lp.width = width;
+		    	lp.height = drawerHeightWithFilter;
+	    	}
+	    }
+	    if (isFilterIsOpen) { setFilterSize(); }
+	    lp.addRule(RelativeLayout.BELOW, lineChartBar.getId());
+    	drawer.setLayoutParams(lp);
+	}
+	
+	private void setFilterSize() {
+		filterView = (View) findViewById(R.id.linechart_filter_area);
+		filterView.requestLayout();
+		if (isRotated) {
+			filterView.getLayoutParams().height = filterHeightLandscape;
+			filterView.setPadding(10, 10, 10, 10);
+		}
+		else {
+			filterView.getLayoutParams().height = filterHeight;
+			filterView.setPadding(30, 30, 30, 30);
+		}
+		
+	}
+	
 	private void showDiary() {		
 		diaryList = (LinearLayout) findViewById(R.id.item);
 				
@@ -297,8 +367,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 			diaryList.addView(diaryItem);
 			date_num.setText(Integer.toString(n) + "號");
 			
-			boxesLayout = (LinearLayout) findViewById(R.layout.diary_item);
-		
+			boxesLayout = (LinearLayout) findViewById(R.layout.diary_item);		
 		}
 	}
 	
@@ -313,6 +382,134 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 			// TODO Auto-generated method stub
 			drawer.toggle();
 		}
+    }
+    
+    private class FilterButtonListener implements View.OnClickListener {
+    	
+    	@Override
+    	public void onClick(View v) {
+    		if (v.getId() == R.id.line_chart_filter) {
+    			if (isFilterIsOpen == false) {				
+					LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
+					//Log.i("OMG", "H: "+lp.height);
+					lp.height = drawerHeightWithFilter;
+					lp.addRule(RelativeLayout.BELOW, lineChartBar.getId());
+					drawer.setLayoutParams(lp);
+					
+					drawerContent.removeAllViews();
+					
+					drawerContent.addView(lineChartFilter);
+					setFilterSize();
+					drawerContent.addView(lineChartView);
+					isFilterIsOpen = true;
+				}
+				else {
+					LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
+					lp.height = drawerHeight;
+					lp.addRule(RelativeLayout.BELOW, lineChartBar.getId());
+					drawer.setLayoutParams(lp);
+					
+					drawerContent.removeAllViews();
+					
+					drawerContent.addView(lineChartView);
+					isFilterIsOpen = false;
+				}
+    			
+    		} else {
+    			if (isFilterIsOpen == false) {				
+					LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
+					//Log.i("OMG", "H: "+lp.height);
+					lp.height = drawerHeightWithFilter;
+					lp.addRule(RelativeLayout.BELOW, calendarBar.getId());
+					drawer.setLayoutParams(lp);
+					
+					drawerContent.removeAllViews();
+					
+					drawerContent.addView(lineChartFilter);
+					setFilterSize();
+					drawerContent.addView(calendarView);
+					isFilterIsOpen = true;
+				}
+				else {
+					LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
+					lp.height = drawerHeight;
+					lp.addRule(RelativeLayout.BELOW, calendarBar.getId());
+					drawer.setLayoutParams(lp);
+					
+					drawerContent.removeAllViews();
+					
+					drawerContent.addView(calendarView);
+					isFilterIsOpen = false;
+				}
+    		} 		
+    	}    	
+    }
+    
+    private class FilterListener implements View.OnClickListener {
+    	
+    	@Override
+    	public void onClick(View v) {
+    		switch (v.getId()) {
+    		case (R.id.filter_all): {
+    			Log.i("OMG", "KKK");
+    			
+    			if (filterButtonIsPressed[0]) { filterButtonIsPressed[0] = false; }
+    			else {filterButtonIsPressed[0] = true; }
+    			
+    			break;
+    		}
+    		case (R.id.filter_1): {
+    			if (filterButtonIsPressed[1]) { filterButtonIsPressed[1] = false; }
+    			else {filterButtonIsPressed[1] = true; }
+    			break;	
+    		}
+    		
+    		case (R.id.filter_2): {
+    			Log.i("OMG", "mememe");
+    			
+    			if (filterButtonIsPressed[2]) { filterButtonIsPressed[2] = false; }
+    			else {filterButtonIsPressed[2] = true; }
+    			break;
+    			
+    		}
+    		
+    		case (R.id.filter_3): {
+    			if (filterButtonIsPressed[3]) { filterButtonIsPressed[3] = false; }
+    			else {filterButtonIsPressed[3] = true; }
+    			break;
+    			
+    		}
+    		
+    		case (R.id.filter_4): {
+    			if (filterButtonIsPressed[4]) { filterButtonIsPressed[4] = false; }
+    			else {filterButtonIsPressed[4] = true; }
+    			break;
+    			
+    		}
+    		case (R.id.filter_5): {
+    			if (filterButtonIsPressed[5]) { filterButtonIsPressed[5] = false; }
+    			else {filterButtonIsPressed[5] = true; }
+    			break;    			
+    		}
+    		case (R.id.filter_6): {
+    			if (filterButtonIsPressed[6]) { filterButtonIsPressed[6] = false; }
+    			else {filterButtonIsPressed[6] = true; }
+    			break;
+    		}
+    		case (R.id.filter_7): {
+    			if (filterButtonIsPressed[7]) { filterButtonIsPressed[7] = false; }
+    			else {filterButtonIsPressed[7] = true; }
+    			break;
+    		}
+    		case (R.id.filter_8): {
+    			if (filterButtonIsPressed[8]) { filterButtonIsPressed[8] = false; }
+    			else {filterButtonIsPressed[8] = true; }
+    			break;
+    		}
+    		
+    		
+    	}
+    }
     }
 		
 }

@@ -2,8 +2,11 @@ package ubicomp.mydaybook.linechart;
 
 import java.util.Calendar;
 import java.util.Random;
+
+import ubicomp.mydaybook.MainActivity;
 import ubicomp.mydaybook.R;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -23,21 +26,22 @@ import android.view.View;
 public class LineChartView extends View {
 
     private static final int LINES = 7;
-    private static final int offsetY = 90;
-    private static final int offsetX = 60;
+    private static int offsetY = 90;
+    private static int offsetX = 60;
     private static int range;
     private float[] datapoints = new float[] {};
     
     private Paint paint = new Paint();
     private Bitmap mBitmap;
 
-    private Bitmap d1 = BitmapFactory.decodeResource(getResources(), R.drawable.green_dot_chart);
-    private Bitmap d2 = BitmapFactory.decodeResource(getResources(), R.drawable.blue_dot_chart);
-    //private Bitmap d3 = BitmapFactory.decodeResource(getResources(), R.drawable.green_dot_chart);
-    private Bitmap d4 = BitmapFactory.decodeResource(getResources(), R.drawable.darkgreen_dot_chart);
-    private Bitmap d5 = BitmapFactory.decodeResource(getResources(), R.drawable.orange_dot_chart);
-    private Bitmap d6 = BitmapFactory.decodeResource(getResources(), R.drawable.red_dot_chart);
-    private Bitmap d7 = BitmapFactory.decodeResource(getResources(), R.drawable.purple_dot_chart);
+    private Bitmap d1 = BitmapFactory.decodeResource(getResources(), R.drawable.dot_color1);
+    private Bitmap d2 = BitmapFactory.decodeResource(getResources(), R.drawable.dot_color2);
+    private Bitmap d3 = BitmapFactory.decodeResource(getResources(), R.drawable.dot_color3);
+    private Bitmap d4 = BitmapFactory.decodeResource(getResources(), R.drawable.dot_color4);
+    private Bitmap d5 = BitmapFactory.decodeResource(getResources(), R.drawable.dot_color5);
+    private Bitmap d6 = BitmapFactory.decodeResource(getResources(), R.drawable.dot_color6);
+    private Bitmap d7 = BitmapFactory.decodeResource(getResources(), R.drawable.dot_color7);
+    private Bitmap d8 = BitmapFactory.decodeResource(getResources(), R.drawable.dot_color8);
   
     private Bitmap rectBarBg = BitmapFactory.decodeResource(getResources(), R.drawable.gray_underbar);
     private Bitmap passBarBg = BitmapFactory.decodeResource(getResources(), R.drawable.pass_rect);
@@ -55,9 +59,7 @@ public class LineChartView extends View {
 
 	public LineChartView(Context context, AttributeSet attrs) {
         super(context, attrs);
-
         gestureDetector = new GestureDetector(context, new GestureListener());
-        initHeight = getHeight();
 
     }
 
@@ -117,7 +119,8 @@ public class LineChartView extends View {
     protected void onDraw(Canvas canvas) {
     	super.onDraw(canvas);   	
     	canvas.save();
-    	
+    	if  (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) { offsetY = 90; }
+    	else { offsetY = 30; }
         drawBackground(canvas);
         drawDate(canvas);
         drawCursor(canvas);
@@ -161,7 +164,7 @@ public class LineChartView extends View {
     	    paint.setColor(Color.BLUE);
     	    paint.setTextAlign(Align.CENTER);
     		paint.setTextSize(35);
-            canvas.drawText(String.valueOf(currentDate+i), getXPos(i), getHeight() - 2*offsetY, paint);
+            canvas.drawText(String.valueOf(currentDate+i), getXPos(i), getHeight() - 120, paint);
     	}
     }
 
@@ -197,6 +200,11 @@ public class LineChartView extends View {
             canvas.drawBitmap(bmp, getXPos(i)-12, getYPos(datapoints[i])-10, p);
         }
     }
+    
+    private boolean drawTheDotOrNot (int typeOfActivity) {
+    	return MainActivity.filterButtonIsPressed[typeOfActivity]; 
+    }
+    
     private Bitmap assignDot(float value) {
     	Bitmap bm = null;
     	//Random r = new Random();
@@ -230,18 +238,18 @@ public class LineChartView extends View {
     private void drawRectBar(Canvas canvas) {
     	Paint p = new Paint();
     	rectBarBg = getResizedBitmap(rectBarBg, 30, rectBarBg.getWidth());
-    	canvas.drawBitmap(rectBarBg , 0 , getHeight() - 100 , p);
+    	canvas.drawBitmap(rectBarBg , 0 , getHeight() - offsetY , p);
     	
     	for (int i = 0; i < datapoints.length; i++) {
     		Random r = new Random();
     		int ran_num = r.nextInt(4 - 1) + 1;
     		if (ran_num == 1) {
     			passBarBg = getResizedBitmap(passBarBg, 28, 60);
-	            canvas.drawBitmap(passBarBg, getXPos(i)-25, getHeight()-100, p);
+	            canvas.drawBitmap(passBarBg, getXPos(i)-25, getHeight()-offsetY, p);
     		}
     		else if (ran_num == 2){
     			noPassBarBg = getResizedBitmap(noPassBarBg, 28, 60);
-	            canvas.drawBitmap(noPassBarBg, getXPos(i)-25, getHeight()-100, p);
+	            canvas.drawBitmap(noPassBarBg, getXPos(i)-25, getHeight()-offsetY, p);
     		}   			
         }    	
     }

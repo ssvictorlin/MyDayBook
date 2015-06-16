@@ -31,11 +31,17 @@
     <dimen name="chart_title_0">36dp</dimen>
     <dimen name="chart_title_1">160dp</dimen>
     <dimen name="chart_title_2">258dp</dimen>
+    <dimen name="chart_title_0_r">82dp</dimen>
+    <dimen name="chart_title_1_r">298dp</dimen>
+    <dimen name="chart_title_2_r">491dp</dimen>
     <dimen name="chart_label_base">13dp</dimen>
     <dimen name="chart_label_gap">3dp</dimen>
     <dimen name="chart_label_top">6dp</dimen>
     <dimen name="chart_label_top2">16dp</dimen>
     <dimen name="drawer_normal_height">325dp</dimen>
+    <dimen name="drawer_with_filter_height">384dp</dimen>
+    <dimen name="filter_normal_height">58dp</dimen>
+    <dimen name="filter_landscape_height">45dp</dimen>
     
     <dimen name="radar_chart_size">154.7dp</dimen>
     <dimen name="fb_gap">20dp</dimen>
