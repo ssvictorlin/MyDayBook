@@ -12,15 +12,19 @@ import ubicomp.mydaybook.data.Database;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 //import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -37,6 +41,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 	private SectionsPagerAdapter mSectionsPagerAdapter;
 	private ViewPager mViewPager;
 	private LinearLayout diaryList, boxesLayout, drawerContent;
+	private View diaryLine;
 	private RelativeLayout upperBarContent;
 	private TextView titleText, backToTodayText;
 	private View diaryItem;
@@ -44,6 +49,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 	@SuppressWarnings("deprecation")
 	private SlidingDrawer drawer;
 	private ImageView toggle, toggle_linechart, linechartIcon, calendarIcon;
+	private ImageView list_line;
 	private Context context;
 	private Database myConstant;
 		
@@ -53,7 +59,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 	
 	public int selectedDay, selectedMonth;
 	
-	private int chart_type = 2;
+	private static int chart_type = 2;
 	private LinearLayout chartAreaLayout;
 	private LineChartView lineChart;
 	private LineChartTitle chartTitle;
@@ -65,16 +71,16 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 	public ImageView lineChartFilterButton, calendarFilterButton, rotateLineChart;
 	
 	public static boolean[] filterButtonIsPressed = {true, false, false, false, false, false, false, false, false};
+	private ImageView[] filterButtonArray = {filterAll, filter1, filter2, filter3, filter4, filter5, filter6, filter7, filter8};
 	
-	private boolean isFilterIsOpen = false;
+	private boolean isFilterOpen = false;
 	private boolean isRotated = false;
 	
 	private int drawerHeight = App.getContext().getResources().getDimensionPixelSize(R.dimen.drawer_normal_height);
 	private int drawerHeightWithFilter = App.getContext().getResources().getDimensionPixelSize(R.dimen.drawer_with_filter_height);
 	private int filterHeight = App.getContext().getResources().getDimensionPixelSize(R.dimen.filter_normal_height);
 	private int filterHeightLandscape = App.getContext().getResources().getDimensionPixelSize(R.dimen.filter_landscape_height);
-	//public static List<Integer> filterList = new ArrayList<Integer>();
-
+	
 	@SuppressWarnings("deprecation")
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +127,9 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 	    calendarIcon = (ImageView) lineChartBar.findViewById(R.id.back_to_calendar);
 	    toggle_linechart = (ImageView) lineChartBar.findViewById(R.id.toggle_linechart);
 	    
+	    //diaryLine = (View) inflater.inflate(R.layout.diary_line, null, false);
+	    //list_line = (ImageView) diaryLine.findViewById(R.id.line);
+	    
 	    filterAll = (ImageView) lineChartFilter.findViewById(R.id.filter_all);
 	    filter1 = (ImageView) lineChartFilter.findViewById(R.id.filter_1);
 	    filter2 = (ImageView) lineChartFilter.findViewById(R.id.filter_2);
@@ -157,7 +166,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				if (isFilterIsOpen == false) {				
+				if (isFilterOpen == false) {				
 					drawerContent.removeAllViews();
 					upperBarContent.removeAllViews();
 					drawerContent.addView(lineChartView);
@@ -174,13 +183,12 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 				if  (!drawer.isOpened()) { drawer.toggle();}
 				
 				lineChart = (LineChartView) findViewById(R.id.lineChart);
-		        lineChart.setChartData(getRandomData());
 		        lineChart.requestLayout();
 		        lineChart.getLayoutParams().width = 2200;
 		        
 		        chartTitle = (LineChartTitle) findViewById(R.id.chart_title);
 		        chartTitle.setting(caller);
-		        setChartType(2);
+		        setChartType(getChartType());
 		        
 		        chartAreaLayout = (LinearLayout) findViewById(R.id.linechart_tabs);
 		        chartAreaLayout.setBackgroundResource(R.drawable.linechart_bg);
@@ -193,8 +201,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				Log.i("OMG", "hi");
-				if (isFilterIsOpen == false) {
+				if (isFilterOpen == false) {
 					drawerContent.removeAllViews();
 					upperBarContent.removeAllViews();
 					
@@ -213,7 +220,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 					upperBarContent.addView(calendarBar);
 					if  (!drawer.isOpened()) { drawer.toggle(); }
 				}
-				
+				//chartTitle.invalidate();
 			}
 		});
 						
@@ -275,8 +282,14 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 		calendarFilterButton = (ImageView) calendarBar.findViewById(R.id.calendar_filter);
 		lineChartFilterButton.setOnClickListener(new FilterButtonListener());
 		calendarFilterButton.setOnClickListener(new FilterButtonListener());
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		
 	}
+	
+	public static int getChartType () {
+		return chart_type;
+	}
+	
 
 	private float[] getRandomData() {
         return new float[] { 0, -3, 1, -2, -1, -3, 3, 2, 0, 1, -2, -1, 2, -2, 0, 1, -3, -1, 2, -1, 1, 3};
@@ -287,16 +300,74 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 		switch (chart_type) {
 		case 0:
 			chartTitle.setBackgroundResource(R.drawable.tab1_pressed);
+			setFilterType(chart_type);
 			break;
 		case 1:
 			chartTitle.setBackgroundResource(R.drawable.tab2_pressed);
+			setFilterType(chart_type);
 			break;
 		case 2:
 			chartTitle.setBackgroundResource(R.drawable.tab3_pressed);
+			setFilterType(chart_type);
 			break;		
 		}
 	}
-	
+	public void setFilterType(int type) {
+		switch (type) {
+		case 0: {
+			//Log.i("OMG", "CASE0");
+			if (isFilterOpen) {
+				filter1.setVisibility(View.VISIBLE);
+				filter2.setVisibility(View.VISIBLE);
+				filter3.setVisibility(View.VISIBLE);
+				filter4.setVisibility(View.VISIBLE);
+				filter5.setVisibility(View.VISIBLE);
+				filter6.setVisibility(View.GONE); filterButtonIsPressed[6] = false;
+				filter7.setVisibility(View.GONE); filterButtonIsPressed[7] = false;
+				filter8.setVisibility(View.GONE); filterButtonIsPressed[8] = false;
+				filterView.setPadding(100, 0, 100, 0);
+			}
+			lineChartFilterButton.setVisibility(View.VISIBLE);
+			lineChart.invalidate();
+			break;
+		}
+		case 1: {
+			//Log.i("OMG", "CASE1");
+			if (isFilterOpen)  {
+				filter1.setVisibility(View.GONE); filterButtonIsPressed[1] = false;
+				filter2.setVisibility(View.GONE); filterButtonIsPressed[2] = false;
+				filter3.setVisibility(View.GONE); filterButtonIsPressed[3] = false;
+				filter4.setVisibility(View.GONE); filterButtonIsPressed[4] = false;
+				filter5.setVisibility(View.GONE); filterButtonIsPressed[5] = false;
+				filter6.setVisibility(View.VISIBLE);
+				filter7.setVisibility(View.VISIBLE);
+				filter8.setVisibility(View.VISIBLE);
+				filterView.setPadding(100, 0, 100, 0);
+			}
+			lineChartFilterButton.setVisibility(View.VISIBLE);
+			lineChart.invalidate();
+			break;
+		}
+		
+		case 2: {
+			//Log.i("OMG", "CASE2");
+			if (isFilterOpen) {
+				LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
+				lp.height = drawerHeight;
+				lp.addRule(RelativeLayout.BELOW, lineChartBar.getId());
+				drawer.setLayoutParams(lp);
+				
+				drawerContent.removeAllViews();
+				
+				drawerContent.addView(lineChartView);
+				isFilterOpen = false;
+			}
+			lineChartFilterButton.setVisibility(View.INVISIBLE);
+			lineChart.invalidate();
+			break;
+		}
+	  }
+	}
 	
 	@Override
 	protected void onResume() {
@@ -328,7 +399,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 	      	
 	    	chartAreaLayout.setBackgroundResource(R.drawable.linechart_bg);
 	    	
-	    	if (!isFilterIsOpen) {		    	
+	    	if (!isFilterOpen) {		    	
 		    	lp.width = width;
 		    	lp.height = drawerHeight;
 	    	}
@@ -337,7 +408,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 		    	lp.height = drawerHeightWithFilter;
 	    	}
 	    }
-	    if (isFilterIsOpen) { setFilterSize(); }
+	    if (isFilterOpen) { setFilterSize(); }
 	    lp.addRule(RelativeLayout.BELOW, lineChartBar.getId());
     	drawer.setLayoutParams(lp);
 	}
@@ -347,11 +418,11 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 		filterView.requestLayout();
 		if (isRotated) {
 			filterView.getLayoutParams().height = filterHeightLandscape;
-			filterView.setPadding(10, 10, 10, 10);
+			//filterView.setPadding(10, 10, 10, 10);
 		}
 		else {
 			filterView.getLayoutParams().height = filterHeight;
-			filterView.setPadding(30, 30, 30, 30);
+			//filterView.setPadding(30, 30, 30, 30);
 		}
 		
 	}
@@ -365,6 +436,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 			//sv_item_height = diaryItem.getMeasuredHeight();
 			TextView date_num = (TextView) diaryItem.findViewById(R.id.date);
 			diaryList.addView(diaryItem);
+			//diaryList.addView(list_line);
 			date_num.setText(Integer.toString(n) + "號");
 			
 			boxesLayout = (LinearLayout) findViewById(R.layout.diary_item);		
@@ -389,7 +461,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
     	@Override
     	public void onClick(View v) {
     		if (v.getId() == R.id.line_chart_filter) {
-    			if (isFilterIsOpen == false) {				
+    			if (isFilterOpen == false) {				
 					LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
 					//Log.i("OMG", "H: "+lp.height);
 					lp.height = drawerHeightWithFilter;
@@ -399,9 +471,12 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 					drawerContent.removeAllViews();
 					
 					drawerContent.addView(lineChartFilter);
+					isFilterOpen = true;
 					setFilterSize();
+					Log.i("OMG", "CASE: "+ chart_type);
+					setFilterType(chart_type);
 					drawerContent.addView(lineChartView);
-					isFilterIsOpen = true;
+					
 				}
 				else {
 					LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
@@ -412,11 +487,11 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 					drawerContent.removeAllViews();
 					
 					drawerContent.addView(lineChartView);
-					isFilterIsOpen = false;
+					isFilterOpen = false;
 				}
     			
     		} else {
-    			if (isFilterIsOpen == false) {				
+    			if (isFilterOpen == false) {				
 					LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
 					//Log.i("OMG", "H: "+lp.height);
 					lp.height = drawerHeightWithFilter;
@@ -426,9 +501,10 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 					drawerContent.removeAllViews();
 					
 					drawerContent.addView(lineChartFilter);
+					isFilterOpen = true;
 					setFilterSize();
 					drawerContent.addView(calendarView);
-					isFilterIsOpen = true;
+					
 				}
 				else {
 					LayoutParams lp = new LayoutParams(drawer.getLayoutParams());
@@ -439,7 +515,7 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
 					drawerContent.removeAllViews();
 					
 					drawerContent.addView(calendarView);
-					isFilterIsOpen = false;
+					isFilterOpen = false;
 				}
     		} 		
     	}    	
@@ -450,66 +526,94 @@ public class MainActivity extends FragmentActivity implements ChartCaller {
     	@Override
     	public void onClick(View v) {
     		switch (v.getId()) {
-    		case (R.id.filter_all): {
-    			Log.i("OMG", "KKK");
-    			
-    			if (filterButtonIsPressed[0]) { filterButtonIsPressed[0] = false; }
-    			else {filterButtonIsPressed[0] = true; }
-    			
+    		case (R.id.filter_all): {  
+    		    filterButtonIsPressed[0] = true; 
+    		    filterAll.setImageResource(R.drawable.filter_all_selected);
+    			setAllButtonImage();
+    			lineChart.invalidate();
     			break;
     		}
     		case (R.id.filter_1): {
-    			if (filterButtonIsPressed[1]) { filterButtonIsPressed[1] = false; }
-    			else {filterButtonIsPressed[1] = true; }
+    			if (filterButtonIsPressed[1]) { filterButtonIsPressed[1] = false; filter1.setImageResource(R.drawable.filter_color1); }
+    			else {filterButtonIsPressed[1] = true; filter1.setImageResource(R.drawable.filter_color1_selected); filterButtonIsPressed[0] = false;}
+    			setAllButtonImage();
+    			lineChart.invalidate();
     			break;	
     		}
     		
     		case (R.id.filter_2): {
-    			Log.i("OMG", "mememe");
-    			
-    			if (filterButtonIsPressed[2]) { filterButtonIsPressed[2] = false; }
-    			else {filterButtonIsPressed[2] = true; }
+    			if (filterButtonIsPressed[2]) { filterButtonIsPressed[2] = false; filter2.setImageResource(R.drawable.filter_color2); }
+    			else {filterButtonIsPressed[2] = true; filter2.setImageResource(R.drawable.filter_color2_selected); filterButtonIsPressed[0] = false;}
+    			setAllButtonImage();
+    			lineChart.invalidate();
     			break;
     			
     		}
     		
     		case (R.id.filter_3): {
-    			if (filterButtonIsPressed[3]) { filterButtonIsPressed[3] = false; }
-    			else {filterButtonIsPressed[3] = true; }
+    			if (filterButtonIsPressed[3]) { filterButtonIsPressed[3] = false; filter3.setImageResource(R.drawable.filter_color3);}
+    			else {filterButtonIsPressed[3] = true; filter3.setImageResource(R.drawable.filter_color3_selected); filterButtonIsPressed[0] = false; }
+    			setAllButtonImage();
+    			lineChart.invalidate();
     			break;
     			
     		}
     		
     		case (R.id.filter_4): {
-    			if (filterButtonIsPressed[4]) { filterButtonIsPressed[4] = false; }
-    			else {filterButtonIsPressed[4] = true; }
+    			if (filterButtonIsPressed[4]) { filterButtonIsPressed[4] = false; filter4.setImageResource(R.drawable.filter_color4);}
+    			else {filterButtonIsPressed[4] = true; filter4.setImageResource(R.drawable.filter_color4_selected); filterButtonIsPressed[0] = false;}
+    			setAllButtonImage();
+    			lineChart.invalidate();
     			break;
     			
     		}
     		case (R.id.filter_5): {
-    			if (filterButtonIsPressed[5]) { filterButtonIsPressed[5] = false; }
-    			else {filterButtonIsPressed[5] = true; }
+    			if (filterButtonIsPressed[5]) { filterButtonIsPressed[5] = false; filter5.setImageResource(R.drawable.filter_color5);}
+    			else {filterButtonIsPressed[5] = true; filter5.setImageResource(R.drawable.filter_color5_selected); filterButtonIsPressed[0] = false;}
+    			setAllButtonImage();
+    			lineChart.invalidate();
     			break;    			
     		}
     		case (R.id.filter_6): {
-    			if (filterButtonIsPressed[6]) { filterButtonIsPressed[6] = false; }
-    			else {filterButtonIsPressed[6] = true; }
+    			if (filterButtonIsPressed[6]) { filterButtonIsPressed[6] = false; filter6.setImageResource(R.drawable.filter_color6);}
+    			else {filterButtonIsPressed[6] = true; filter6.setImageResource(R.drawable.filter_color6_selected); filterButtonIsPressed[0] = false;}
+    			setAllButtonImage();
+    			lineChart.invalidate();
     			break;
     		}
     		case (R.id.filter_7): {
-    			if (filterButtonIsPressed[7]) { filterButtonIsPressed[7] = false; }
-    			else {filterButtonIsPressed[7] = true; }
+    			if (filterButtonIsPressed[7]) { filterButtonIsPressed[7] = false; filter7.setImageResource(R.drawable.filter_color7);}
+    			else {filterButtonIsPressed[7] = true; filter7.setImageResource(R.drawable.filter_color7_selected); filterButtonIsPressed[0] = false;}
+    			setAllButtonImage();
+    			lineChart.invalidate();
     			break;
     		}
     		case (R.id.filter_8): {
-    			if (filterButtonIsPressed[8]) { filterButtonIsPressed[8] = false; }
-    			else {filterButtonIsPressed[8] = true; }
+    			if (filterButtonIsPressed[8]) { filterButtonIsPressed[8] = false; filter8.setImageResource(R.drawable.filter_color8);}
+    			else {filterButtonIsPressed[8] = true; filter8.setImageResource(R.drawable.filter_color8_selected); filterButtonIsPressed[0] = false;}
+    			setAllButtonImage();
+    			lineChart.invalidate();
     			break;
-    		}
-    		
-    		
+    		}	
     	}
     }
-    }
+    	
+    	private void setAllButtonImage() {
+    		if (filterButtonIsPressed[0]) {
+    			filter1.setImageResource(R.drawable.filter_color1);
+    			filter2.setImageResource(R.drawable.filter_color2);
+    			filter3.setImageResource(R.drawable.filter_color3);
+    			filter4.setImageResource(R.drawable.filter_color4);
+    			filter5.setImageResource(R.drawable.filter_color5);
+    			filter6.setImageResource(R.drawable.filter_color6);
+    			filter7.setImageResource(R.drawable.filter_color7);
+    			filter8.setImageResource(R.drawable.filter_color8);
+    		}
+    		else {
+    			filterAll.setImageResource(R.drawable.filter_all);
+    		}
+    	}
+  }
+    
 		
 }

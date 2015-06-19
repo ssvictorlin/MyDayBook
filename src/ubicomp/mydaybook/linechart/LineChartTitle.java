@@ -20,8 +20,7 @@ public class LineChartTitle extends View {
 	private ChartCaller caller;
 	private boolean chartTouchable = true;
 	
-	private int chart_type = 2;
-	
+	private int chartType;
 	private int title_0 = App.getContext().getResources().getDimensionPixelSize(R.dimen.chart_title_0);
 	private int title_1 = App.getContext().getResources().getDimensionPixelSize(R.dimen.chart_title_1);
 	private int title_2 = App.getContext().getResources().getDimensionPixelSize(R.dimen.chart_title_2);
@@ -46,13 +45,14 @@ public class LineChartTitle extends View {
 		text_paint_large.setTextSize(textSize);
 		text_paint_large.setTextAlign(Align.LEFT);
 		text_paint_large.setTypeface(Typefaces.getWordTypefaceBold());
-		text_paint_large_2.setColor(Color.BLUE);
+		text_paint_large_2.setColor(getResources().getColor(R.color.linechart_date_color));
 		text_paint_large_2.setTextSize(textSize);
 		text_paint_large_2.setTextAlign(Align.LEFT);
 		text_paint_large_2.setTypeface(Typefaces.getWordTypefaceBold());
 		
 	
 	}
+	
 	
 	public void setting(ChartCaller caller) {
 		this.caller = caller;
@@ -68,20 +68,26 @@ public class LineChartTitle extends View {
 		if (!chartTouchable)
 			return true;
 		int x = (int) event.getX();
-
+		//Log.i("OMG", "TYPEAA: " +checkLineChartType());
+        chartType = checkLineChartType();
 		if (event.getAction() == MotionEvent.ACTION_DOWN) {
 			if (x < t2) {
-				chart_type = 0;
+				chartType = 0;
 			} else if (x < t3) {
-				chart_type = 1;
+				chartType = 1;
 			} else {
-				chart_type = 2;
+				chartType = 2;
 			}
-			caller.setChartType(chart_type);
+			caller.setChartType(chartType);
+			//Log.i("OMG", "TYPEBB: " +checkLineChartType());
 			invalidate();
 		}
 		return true;
 	}
+	
+	private int checkLineChartType() {
+		return MainActivity.getChartType();
+    }
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
@@ -100,7 +106,8 @@ public class LineChartTitle extends View {
 		canvas.drawText(title_str[0], t1, titleTop, text_paint_large);
 		canvas.drawText(title_str[1], t2, titleTop, text_paint_large);
 		canvas.drawText(title_str[2], t3, titleTop, text_paint_large);
-		switch (chart_type) {
+		//Log.i("OMG", "TYPECC: " +chartType);
+		switch (checkLineChartType()) {
 		case 0:
 			canvas.drawText(title_str[0], t1, titleTop, text_paint_large_2);
 			break;

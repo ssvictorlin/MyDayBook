@@ -27,7 +27,7 @@
     <dimen name="chart_button_start_left">30dp</dimen>
     <dimen name="chart_button_start_top">55dp</dimen>
     <dimen name="chart_height">167dp</dimen>
-    <dimen name="chart_title_top">30dp</dimen>
+    <dimen name="chart_title_top">33dp</dimen>
     <dimen name="chart_title_0">36dp</dimen>
     <dimen name="chart_title_1">160dp</dimen>
     <dimen name="chart_title_2">258dp</dimen>
@@ -42,6 +42,8 @@
     <dimen name="drawer_with_filter_height">384dp</dimen>
     <dimen name="filter_normal_height">58dp</dimen>
     <dimen name="filter_landscape_height">45dp</dimen>
+    <dimen name="filter_button_width">30dp</dimen>
+    <dimen name="filter_button_height">30dp</dimen>
     
     <dimen name="radar_chart_size">154.7dp</dimen>
     <dimen name="fb_gap">20dp</dimen>
