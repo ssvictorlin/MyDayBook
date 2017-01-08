@@ -1,2 +1,3 @@
 # RehabDiary 
-This is the app for Ubicomp Lab RehabDiary phone application
+
+This is the app for RehabDiary project
